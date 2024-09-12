@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Untis Timetable with Custom Events</title>
-    <script src="untis.js" defer></script>
+    <script type="module" src="untis.js" defer></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -106,15 +106,17 @@
         }
 
         // Fetch timetable from untis.js
+        import stundenplanJson from './untis.js'; // Import the function from untis.js
+
         async function fetchTimetable() {
             const schulname = getCookie('schulname');
             const benutzername = getCookie('benutzername');
             const passwort = getCookie('passwort');
             const domain = getCookie('domain');
-
+        
             if (schulname && benutzername && passwort && domain) {
                 const date = new Date(); // Current date
-
+        
                 const timetableData = await stundenplanJson(date); // Call the untis.js function to fetch the timetable
                 populateCalendar(timetableData.timetable);
             }
