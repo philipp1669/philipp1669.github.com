@@ -1,4 +1,4 @@
-import { WebUntis } from "webuntis";
+import { WebUntis } from "https://cdn.skypack.dev/webuntis@latest";
 import { schulname, benutzername, passwort, domain } from "./credentials.js";
 
 const untis = new WebUntis(schulname, benutzername, passwort, domain);
