@@ -1,8 +1,6 @@
 import { WebUntis } from "https://cdn.skypack.dev/webuntis@latest";
-import { schulname, benutzername, passwort, domain } from "./credentials.js";
 
-const untis = new WebUntis(schulname, benutzername, passwort, domain);
-
+// Function to format time
 let formatTime = (date) => {
   date = WebUntis.convertUntisTime(date);
   let hours = date.getHours();
@@ -14,7 +12,16 @@ let formatTime = (date) => {
   return `${hours}:${minutes}`;
 };
 
-let stundenplanJson = async (date) => {
+// Function to fetch timetable from WebUntis
+let stundenplanJson = async (
+  schulname,
+  benutzername,
+  passwort,
+  domain,
+  date
+) => {
+  const untis = new WebUntis(schulname, benutzername, passwort, domain);
+
   await untis.login();
   let timetable = await untis.getOwnTimetableFor(date);
 
@@ -43,6 +50,7 @@ let stundenplanJson = async (date) => {
       room: room,
     });
   });
+
   return json;
 };
 
