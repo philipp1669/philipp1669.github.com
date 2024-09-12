@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untis Timetable with Custom Events</title>
+    <script src="untis.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #form {
+            margin: 20px;
+        }
+
+        #calendar {
+            margin: 20px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #calendar th, #calendar td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .event-form {
+            margin: 20px;
+        }
+
+        .event-form input, .event-form button {
+            margin: 5px;
+        }
+
+        .custom-event {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+    <h1>Untis Timetable with Custom Events</h1>
+
+    <form id="form">
+        <label for="schulname">Schulname:</label>
+        <input type="text" id="schulname" required><br>
+        
+        <label for="benutzername">Benutzername:</label>
+        <input type="text" id="benutzername" required><br>
+        
+        <label for="passwort">Passwort:</label>
+        <input type="password" id="passwort" required><br>
+        
+        <label for="domain">Domain:</label>
+        <input type="text" id="domain" required><br><br>
+        
+        <button type="submit">Save & Fetch Timetable</button>
+    </form>
+
+    <h2>Your Timetable:</h2>
+    <table id="calendar">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Subject</th>
+                <th>Room</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <div class="event-form">
+        <h3>Add Custom Event</h3>
+        <label for="event-title">Event Title:</label>
+        <input type="text" id="event-title" required><br>
+        
+        <label for="event-time">Event Time (HH:MM):</label>
+        <input type="time" id="event-time" required><br><br>
+        
+        <button id="add-event">Add Event</button>
+    </div>
+
+    <script>
+        // Save credentials to cookie
+        document.getElementById('form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const schulname = document.getElementById('schulname').value;
+            const benutzername = document.getElementById('benutzername').value;
+            const passwort = document.getElementById('passwort').value;
+            const domain = document.getElementById('domain').value;
+
+            document.cookie = `schulname=${schulname}; path=/`;
+            document.cookie = `benutzername=${benutzername}; path=/`;
+            document.cookie = `passwort=${passwort}; path=/`;
+            document.cookie = `domain=${domain}; path=/`;
+
+            fetchTimetable();
+        });
+
+        // Fetch the credentials from cookies
+        function getCookie(name) {
+            let value = "; " + document.cookie;
+            let parts = value.split("; " + name + "=");
+            if (parts.length == 2) return parts.pop().split(";").shift();
+        }
+
+        // Fetch timetable from untis.js
+        async function fetchTimetable() {
+            const schulname = getCookie('schulname');
+            const benutzername = getCookie('benutzername');
+            const passwort = getCookie('passwort');
+            const domain = getCookie('domain');
+
+            if (schulname && benutzername && passwort && domain) {
+                const date = new Date(); // Current date
+
+                const timetableData = await stundenplanJson(date); // Call the untis.js function to fetch the timetable
+                populateCalendar(timetableData.timetable);
+            }
+        }
+
+        // Populate timetable with data
+        function populateCalendar(timetable) {
+            const calendarBody = document.querySelector('#calendar tbody');
+            calendarBody.innerHTML = ''; // Clear the table first
+
+            timetable.forEach((lesson) => {
+                const row = document.createElement('tr');
+                
+                const timeCell = document.createElement('td');
+                timeCell.innerText = `${lesson.startTimeFormatted} - ${lesson.endTimeFormatted}`;
+                
+                const subjectCell = document.createElement('td');
+                subjectCell.innerText = lesson.subject_long;
+                
+                const roomCell = document.createElement('td');
+                roomCell.innerText = lesson.room;
+
+                row.appendChild(timeCell);
+                row.appendChild(subjectCell);
+                row.appendChild(roomCell);
+
+                calendarBody.appendChild(row);
+            });
+
+            loadCustomEvents(); // Load custom events after timetable is displayed
+        }
+
+        // Save custom event to cookie
+        document.getElementById('add-event').addEventListener('click', function() {
+            const eventTitle = document.getElementById('event-title').value;
+            const eventTime = document.getElementById('event-time').value;
+
+            let customEvents = JSON.parse(getCookie('customEvents') || '[]');
+            customEvents.push({ title: eventTitle, time: eventTime });
+            document.cookie = `customEvents=${JSON.stringify(customEvents)}; path=/`;
+
+            addCustomEventToCalendar(eventTitle, eventTime);
+        });
+
+        // Add custom event to calendar
+        function addCustomEventToCalendar(title, time) {
+            const calendarBody = document.querySelector('#calendar tbody');
+            const row = document.createElement('tr');
+            row.classList.add('custom-event');
+            
+            const timeCell = document.createElement('td');
+            timeCell.innerText = time;
+            
+            const titleCell = document.createElement('td');
+            titleCell.innerText = title;
+            
+            const roomCell = document.createElement('td');
+            roomCell.innerText = 'Custom Event';
+
+            row.appendChild(timeCell);
+            row.appendChild(titleCell);
+            row.appendChild(roomCell);
+
+            calendarBody.appendChild(row);
+        }
+
+        // Load custom events from cookies
+        function loadCustomEvents() {
+            let customEvents = JSON.parse(getCookie('customEvents') || '[]');
+            customEvents.forEach(event => {
+                addCustomEventToCalendar(event.title, event.time);
+            });
+        }
+
+        // Fetch the timetable on page load if credentials are saved
+        window.onload = fetchTimetable;
+
+    </script>
+</body>
+</html>
